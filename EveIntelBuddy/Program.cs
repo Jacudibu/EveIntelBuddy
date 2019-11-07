@@ -71,7 +71,7 @@ namespace EveIntelBuddy
                 return;
             }
             
-            Console.Out.WriteLine("OnChanged triggered " + e.Name);
+            //Console.Out.WriteLine("OnChanged triggered " + e.Name);
             
             while (!_intelStreamReader.EndOfStream)
             {
@@ -82,7 +82,6 @@ namespace EveIntelBuddy
 
         static void ProcessLine(string line)
         {
-            Console.Out.WriteLine(line);
             foreach (var systemName in _watchedSystems)
             {
                 if (line.ToLower().Contains(systemName.ToLower()))
