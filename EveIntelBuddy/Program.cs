@@ -109,12 +109,17 @@ namespace EveIntelBuddy
                 if (line.ToLower().Contains(systemName.ToLower()))
                 {
                     Console.Out.WriteLine(line);
-                    for (int i = 0; i < BeepDurationInSeconds * 5; i++)
-                    {
-                        Console.Beep();
-                        Thread.Sleep(200);                        
-                    }
+                    Beep();
                 }
+            }
+        }
+
+        static void Beep()
+        {
+            for (int i = 0; i < BeepDurationInSeconds * 5; i++)
+            {
+                Console.Beep();
+                Thread.Sleep(200);                        
             }
         }
 
@@ -131,7 +136,7 @@ namespace EveIntelBuddy
             return result;
         }
 
-        private static readonly string[] ExitStrings = new [] {"exit", "stop"};
+        private static readonly string[] ExitStrings = new[] {"exit", "stop"};
         private static readonly string[] SetupStrings = new[] {"setup", "reconfigure"};
         
         static void WaitForExit()
@@ -139,16 +144,21 @@ namespace EveIntelBuddy
             var input = "";
             while (!input.Equals("exit") && !input.Equals("stop"))
             {
-                input = ConsolePrompt("\nEnter 'exit' if you want me to stop or 'setup' to reconfigure.").ToLower();
+                input = ConsolePrompt("\nEnter 'exit' if you want me to stop, 'setup' to reconfigure and 'test' to play a test sound.").ToLower();
 
                 if (ExitStrings.Any(x => x.Equals(input)))
                 {
                     return;
                 }
                 
-                if (SetupStrings.Any(x => x.Equals(SetupStrings)))
+                if (SetupStrings.Any(x => x.Equals(input)))
                 {
                     Reconfigure();
+                }
+
+                if (input.Equals("test"))
+                {
+                    Beep();
                 }
             }
         }
