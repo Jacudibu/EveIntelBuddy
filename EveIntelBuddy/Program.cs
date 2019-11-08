@@ -18,27 +18,7 @@ namespace EveIntelBuddy
         
         static void Main(string[] args)
         {
-            var channel = ConsolePrompt("Which In-Game Chat Channel should I watch? ");
-            ChannelName = channel.Equals("default") ? "Bean-Intel" : channel;
-            
-            var systems = ConsolePrompt("Which systems (or words) should raise an alert? ");
-            if (systems.Equals("default"))
-            {
-                _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"}
-                    .Select(x => x.ToLower())
-                    .ToList();
-            }
-            else
-            {
-                _watchedSystems = systems
-                    .Replace(',', ' ')
-                    .Split(' ')
-                    .Where(x => x.Length > 0)
-                    .Select(x => x.ToLower())
-                    .ToList();
-            }
-            
-            Console.WriteLine($"Okay, I'll keep an eye on {ChannelName} for the words {string.Join(", ", _watchedSystems)}. Fly save!");
+            Reconfigure();
             
             var watcher = new FileSystemWatcher
             {
@@ -62,18 +42,42 @@ namespace EveIntelBuddy
             }
         }
 
+        static void Reconfigure()
+        {
+            var channel = ConsolePrompt("Which In-Game Chat Channel should I watch?");
+            ChannelName = channel.Equals("default") ? "Bean-Intel" : channel;
+            
+            var systems = ConsolePrompt("Which systems (or words) should raise an alert?");
+            if (systems.Equals("default"))
+            {
+                _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"}
+                    .Select(x => x.ToLower())
+                    .ToList();
+            }
+            else
+            {
+                _watchedSystems = systems
+                    .Replace(',', ' ')
+                    .Split(' ')
+                    .Where(x => x.Length > 0)
+                    .Select(x => x.ToLower())
+                    .ToList();
+            }
+            
+            Console.WriteLine($"Okay, I'll keep an eye on {ChannelName} for the words {string.Join(", ", _watchedSystems)}. Fly save!");
+        }
+        
         static void OnCreated(object source, FileSystemEventArgs e)
         {
             Console.Out.WriteLine("OnCreated triggered " + e.Name);
 
             _intelStreamReader?.Close();
             _intelFileStream?.Close();
-            
+
             _intelFileStream = new FileStream(e.FullPath, FileMode.Open, FileAccess.Read, FileShare.Read);
             _intelStreamReader = new StreamReader(_intelFileStream);
         }
-        
-        
+
         static void OnChanged(object source, FileSystemEventArgs e)
         {
             if (_intelFileStream == null)
@@ -127,12 +131,25 @@ namespace EveIntelBuddy
             return result;
         }
 
+        private static readonly string[] ExitStrings = new [] {"exit", "stop"};
+        private static readonly string[] SetupStrings = new[] {"setup", "reconfigure"};
+        
         static void WaitForExit()
         {
-            var exit = "";
-            while (!exit.Equals("exit") && !exit.Equals("stop"))
+            var input = "";
+            while (!input.Equals("exit") && !input.Equals("stop"))
             {
-                exit = ConsolePrompt("\nEnter 'exit' if you want me to stop").ToLower();
+                input = ConsolePrompt("\nEnter 'exit' if you want me to stop or 'setup' to reconfigure.").ToLower();
+
+                if (ExitStrings.Any(x => x.Equals(input)))
+                {
+                    return;
+                }
+                
+                if (SetupStrings.Any(x => x.Equals(SetupStrings)))
+                {
+                    Reconfigure();
+                }
             }
         }
     }
