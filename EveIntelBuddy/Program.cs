@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace EveIntelBuddy
@@ -17,6 +18,15 @@ namespace EveIntelBuddy
         
         static void Main(string[] args)
         {
+            var channel = ConsolePrompt("Which In-Game Chat Channel should I watch? ");
+            var systems = ConsolePrompt("Which systems (or words) should raise an alert? ");
+            
+            var systemsSplit = systems
+                .Replace(',', ' ')
+                .Split(' ')
+                .Where(x => x.Length > 0)
+                .Select(x => x.ToLower());
+            
             var watcher = new FileSystemWatcher
             {
                 Path = FilePath, 
@@ -30,10 +40,7 @@ namespace EveIntelBuddy
                 watcher.Changed += OnChanged;
                 watcher.Created += OnCreated;
                 watcher.EnableRaisingEvents = true;
-                while (true)
-                {
-                    Thread.Sleep(1000);
-                }                
+                WaitForExit();
             }
             finally
             {
@@ -66,12 +73,10 @@ namespace EveIntelBuddy
                 _intelStreamReader = new StreamReader(_intelFileStream);
             }
 
-            if (e.FullPath != _intelFileStream.Name)
+            if (!e.FullPath.Equals(_intelFileStream.Name))
             {
                 return;
             }
-            
-            //Console.Out.WriteLine("OnChanged triggered " + e.Name);
             
             while (!_intelStreamReader.EndOfStream)
             {
@@ -93,6 +98,28 @@ namespace EveIntelBuddy
                         Thread.Sleep(200);                        
                     }
                 }
+            }
+        }
+
+        static string ConsolePrompt(string prompt)
+        {
+            var result = "";
+            while (string.IsNullOrEmpty(result))
+            {
+                Console.Out.WriteLine(prompt);
+                result = Console.ReadLine();
+            }
+
+            Console.Out.WriteLine("");
+            return result;
+        }
+
+        static void WaitForExit()
+        {
+            var exit = "";
+            while (!exit.Equals("exit") && !exit.Equals("stop"))
+            {
+                exit = ConsolePrompt("\nEnter 'exit' if you want me to stop").ToLower();
             }
         }
     }
