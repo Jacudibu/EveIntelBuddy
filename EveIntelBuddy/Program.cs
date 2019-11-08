@@ -9,7 +9,7 @@ namespace EveIntelBuddy
     class Program
     {
         private const string FilePath = "/ssdapps/eve-online/drive_c/users/jacudibu/My Documents/EVE/logs/Chatlogs/";
-        private const string ChannelName = "Bean-Intel";
+        private static string ChannelName = "Bean-Intel";
         private static List<string> _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"};
         private const int BeepDurationInSeconds = 1;
         
@@ -19,13 +19,26 @@ namespace EveIntelBuddy
         static void Main(string[] args)
         {
             var channel = ConsolePrompt("Which In-Game Chat Channel should I watch? ");
-            var systems = ConsolePrompt("Which systems (or words) should raise an alert? ");
+            ChannelName = channel.Equals("default") ? "Bean-Intel" : channel;
             
-            var systemsSplit = systems
-                .Replace(',', ' ')
-                .Split(' ')
-                .Where(x => x.Length > 0)
-                .Select(x => x.ToLower());
+            var systems = ConsolePrompt("Which systems (or words) should raise an alert? ");
+            if (systems.Equals("default"))
+            {
+                _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"}
+                    .Select(x => x.ToLower())
+                    .ToList();
+            }
+            else
+            {
+                _watchedSystems = systems
+                    .Replace(',', ' ')
+                    .Split(' ')
+                    .Where(x => x.Length > 0)
+                    .Select(x => x.ToLower())
+                    .ToList();
+            }
+            
+            Console.WriteLine($"Okay, I'll keep an eye on {ChannelName} for the words {string.Join(", ", _watchedSystems)}. Fly save!");
             
             var watcher = new FileSystemWatcher
             {
