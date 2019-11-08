@@ -8,8 +8,7 @@ namespace EveIntelBuddy
 {
     class Program
     {
-        private static string ChannelName = "Bean-Intel";
-        private static List<string> _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"};
+        private static Preset _currentPreset;
         private const int BeepDurationInSeconds = 1;
         
         private static FileStream? _intelFileStream;
@@ -18,13 +17,13 @@ namespace EveIntelBuddy
         static void Main(string[] args)
         {
             Settings.LoadOrInitialize();
-            Reconfigure();
+            CreateNewPreset();
             
             var watcher = new FileSystemWatcher
             {
                 Path = Settings.ChatLogFolder, 
                 NotifyFilter =   NotifyFilters.LastWrite | NotifyFilters.LastAccess,
-                Filter = ChannelName + "_*.txt"
+                Filter = _currentPreset.Channel + "_*.txt"
             };
             
             try
@@ -40,22 +39,22 @@ namespace EveIntelBuddy
                 _intelFileStream?.Close();
             }
         }
-
-        static void Reconfigure()
+        static void CreateNewPreset()
         {
             var channel = ConsolePrompt("Which In-Game Chat Channel should I watch?");
-            ChannelName = channel.Equals("default") ? "Bean-Intel" : channel;
+            channel = channel.Equals("default") ? "Bean-Intel" : channel;
             
-            var systems = ConsolePrompt("Which systems (or words) should raise an alert?");
-            if (systems.Equals("default"))
+            var wordString = ConsolePrompt("Which systems (or words) should raise an alert?");
+            List<string> words;
+            if (wordString.Equals("default"))
             {
-                _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"}
+                words = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"}
                     .Select(x => x.ToLower())
                     .ToList();
             }
             else
             {
-                _watchedSystems = systems
+                words = wordString
                     .Replace(',', ' ')
                     .Split(' ')
                     .Where(x => x.Length > 0)
@@ -63,7 +62,8 @@ namespace EveIntelBuddy
                     .ToList();
             }
             
-            Console.WriteLine($"Okay, I'll keep an eye on {ChannelName} for the words {string.Join(", ", _watchedSystems)}. Fly save!");
+            _currentPreset = new Preset(channel, words);
+            Console.WriteLine($"Okay, I'll keep an eye on {_currentPreset.Channel} for the words {string.Join(", ", _currentPreset.Words)}. Fly save!");
         }
         
         static void OnCreated(object source, FileSystemEventArgs e)
@@ -103,9 +103,9 @@ namespace EveIntelBuddy
 
         static void ProcessLine(string line)
         {
-            foreach (var systemName in _watchedSystems)
+            foreach (var word in _currentPreset.Words)
             {
-                if (line.ToLower().Contains(systemName.ToLower()))
+                if (line.ToLower().Contains(word.ToLower()))
                 {
                     Console.Out.WriteLine(line);
                     Beep();
@@ -143,7 +143,10 @@ namespace EveIntelBuddy
             var input = "";
             while (!input.Equals("exit") && !input.Equals("stop"))
             {
-                input = ConsolePrompt("\nEnter 'exit' if you want me to stop, 'setup' to reconfigure and 'test' to play a test sound.").ToLower();
+                input = ConsolePrompt("\nEnter 'exit' if you want me to stop, " +
+                                      "'setup' to reconfigure, " +
+                                      "'test' to play a test sound and " +
+                                      "'save' in order to save your current settings as a preset.").ToLower();
 
                 if (ExitStrings.Any(x => x.Equals(input)))
                 {
@@ -152,7 +155,13 @@ namespace EveIntelBuddy
                 
                 if (SetupStrings.Any(x => x.Equals(input)))
                 {
-                    Reconfigure();
+                    CreateNewPreset();
+                }
+
+                if (input.Equals("save"))
+                {
+                    var name = ConsolePrompt("Please enter a name for the preset.");
+                    _currentPreset.Save(name);
                 }
 
                 if (input.Equals("test"))

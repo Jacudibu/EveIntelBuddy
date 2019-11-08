@@ -5,6 +5,7 @@ namespace EveIntelBuddy
 {
     public static class Settings
     {
+        public const string PresetFolderName = "presets";
         public const string SettingsFileName = "settings.txt";
         
         public static string ChatLogFolder = null;
@@ -18,6 +19,11 @@ namespace EveIntelBuddy
             else
             {
                 Initialize();
+            }
+
+            if (!Directory.Exists(PresetFolderName))
+            {
+                Directory.CreateDirectory(PresetFolderName);
             }
         }
 
