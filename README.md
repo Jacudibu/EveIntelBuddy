@@ -1,5 +1,3 @@
-Right now this is still a prototype. If you want to use it yourself, you'll probably need to at least adjust the path to the eve chatlogs that's currently hardcoded.
-
 # Eve Intel Buddy
 This very minimalistic cross-platform console application keeps an eye on a chat channel of your choice and notifies you when one of your predefined words is posted by someone.
 

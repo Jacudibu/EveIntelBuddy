@@ -8,7 +8,6 @@ namespace EveIntelBuddy
 {
     class Program
     {
-        private const string FilePath = "/ssdapps/eve-online/drive_c/users/jacudibu/My Documents/EVE/logs/Chatlogs/";
         private static string ChannelName = "Bean-Intel";
         private static List<string> _watchedSystems = new List<string>() {"6V-D0E", "LS3-HP", "QX-4HO", "BVRQ-O"};
         private const int BeepDurationInSeconds = 1;
@@ -18,18 +17,18 @@ namespace EveIntelBuddy
         
         static void Main(string[] args)
         {
+            Settings.LoadOrInitialize();
             Reconfigure();
             
             var watcher = new FileSystemWatcher
             {
-                Path = FilePath, 
+                Path = Settings.ChatLogFolder, 
                 NotifyFilter =   NotifyFilters.LastWrite | NotifyFilters.LastAccess,
                 Filter = ChannelName + "_*.txt"
             };
             
             try
             {
-                Console.Out.WriteLine("Listening on " + FilePath);
                 watcher.Changed += OnChanged;
                 watcher.Created += OnCreated;
                 watcher.EnableRaisingEvents = true;
